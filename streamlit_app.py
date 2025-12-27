@@ -236,13 +236,26 @@ def main():
             with col1:
                 # Check-out status
                 checkout_status = filtered_df['Is Checked Out'].value_counts()
-                fig_checkout = px.pie(
-                    values=checkout_status.values,
-                    names=['Available', 'Checked Out'],
-                    title="Check-out Status Distribution",
-                    color_discrete_map={True: '#ff6b6b', False: '#51cf66'}
-                )
-                st.plotly_chart(fig_checkout, use_container_width=True)
+                # Create proper mapping for pie chart
+                checkout_data = pd.DataFrame({
+                    'Status': ['Available', 'Checked Out'],
+                    'Count': [
+                        checkout_status.get(False, 0),
+                        checkout_status.get(True, 0)
+                    ]
+                })
+                # Only show chart if there's data
+                if checkout_data['Count'].sum() > 0:
+                    fig_checkout = px.pie(
+                        checkout_data,
+                        values='Count',
+                        names='Status',
+                        title="Check-out Status Distribution",
+                        color_discrete_map={'Checked Out': '#ff6b6b', 'Available': '#51cf66'}
+                    )
+                    st.plotly_chart(fig_checkout, use_container_width=True)
+                else:
+                    st.info("No data available for checkout status")
             
             with col2:
                 # Active status
@@ -263,12 +276,26 @@ def main():
                 filtered_df['Building'], 
                 filtered_df['Is Checked Out']
             )
+            # Rename boolean columns to readable names and reset index
+            status_by_building.columns = ['Available', 'Checked Out']
+            status_by_building = status_by_building.reset_index()
+            # Melt for proper plotting
+            status_melted = status_by_building.melt(
+                id_vars='Building',
+                value_vars=['Available', 'Checked Out'],
+                var_name='Status',
+                value_name='Count'
+            )
+            
             fig_status = px.bar(
-                status_by_building,
+                status_melted,
+                x='Building',
+                y='Count',
+                color='Status',
                 title="Check-out Status by Building",
-                labels={'value': 'Number of Assets', 'index': 'Building'},
+                labels={'Count': 'Number of Assets', 'Building': 'Building'},
                 barmode='group',
-                color_discrete_map={True: '#ff6b6b', False: '#51cf66'}
+                color_discrete_map={'Checked Out': '#ff6b6b', 'Available': '#51cf66'}
             )
             fig_status.update_layout(xaxis_title="Building", yaxis_title="Number of Assets")
             st.plotly_chart(fig_status, use_container_width=True)
