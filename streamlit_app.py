@@ -16,18 +16,33 @@ st.title("📊 Redbeam Data Dashboard")
 @st.cache_data
 def load_latest_data():
     """Load the most recent CSV file from the output directory."""
-    output_dir = Path(r"C:\Users\natec\OneDrive\Desktop\redbeam scraper")
+    # Try multiple possible paths (local Windows path and Streamlit Cloud)
+    possible_paths = [
+        Path(r"C:\Users\natec\OneDrive\Desktop\redbeam scraper"),  # Local Windows
+        Path.home() / "Desktop" / "redbeam scraper",  # Alternative local path
+        Path(".") / "data",  # Streamlit Cloud relative path
+        Path("."),  # Current directory
+    ]
+    
+    output_dir = None
+    for path in possible_paths:
+        if path.exists() and path.is_dir():
+            output_dir = path
+            break
+    
+    # If no directory found, try current directory
+    if output_dir is None:
+        output_dir = Path(".")
     
     # Find all CSV files
     csv_files = list(output_dir.glob("*.csv"))
     
     if not csv_files:
-        return None
+        return None, None
     
     # Get the most recent file
-    latest_file = max(csv_files, key=lambda x: x.stat().st_mtime)
-    
     try:
+        latest_file = max(csv_files, key=lambda x: x.stat().st_mtime)
         df = pd.read_csv(latest_file)
         return df, latest_file
     except Exception as e:
@@ -37,11 +52,24 @@ def load_latest_data():
 # Load data
 df, file_path = load_latest_data()
 
-if df is None:
-    st.warning("No data files found. Please run the scraper first.")
-    st.stop()
+if df is None or file_path is None:
+    st.warning("No data files found. Please run the scraper first or upload a CSV file.")
+    
+    # Allow file upload as fallback
+    uploaded_file = st.file_uploader("Upload a CSV file", type=['csv'])
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+            file_path = Path(uploaded_file.name)
+            st.success("File uploaded successfully!")
+        except Exception as e:
+            st.error(f"Error reading uploaded file: {e}")
+            st.stop()
+    else:
+        st.stop()
 
-st.success(f"Loaded data from: {file_path.name}")
+file_display_name = file_path.name if isinstance(file_path, Path) else str(file_path)
+st.success(f"Loaded data from: {file_display_name}")
 st.info(f"Data shape: {df.shape[0]} rows × {df.shape[1]} columns")
 
 # Display raw data
