@@ -1,67 +1,103 @@
-# RFID Tool Tracking & Theft Prevention Dashboard
+# Redbeam Data Scraper
 
-A comprehensive Streamlit dashboard for tracking RFID-tagged tools and assets with theft prevention capabilities.
+Automated scraper to extract data from your Redbeam account and save it to an Excel file on your desktop.
 
 ## Features
 
-- 📍 **Location Overview**: Visualize asset distribution across buildings and rooms
-- 📦 **Asset Status**: Monitor check-out status and active/inactive assets
-- 👤 **Check-out Analysis**: Track checked-out assets and identify long-term checkouts
-- 📊 **Analytics**: Time-based trends and asset update patterns
-- 🔍 **Search & Details**: Advanced search functionality and data export
-- ⚠️ **Alerts**: Automatic warnings for:
-  - Assets checked out for more than 30 days
-  - Assets not updated in 90+ days
-  - Inactive assets that are checked out
+- Automated login to Redbeam
+- Data extraction from the data page
+- Saves data to Excel file on desktop with timestamp
+- Can be scheduled to run daily
+- Comprehensive logging
+
+## Prerequisites
+
+1. **Python 3.8+** installed on your system
+2. **Google Chrome** browser installed
+3. **ChromeDriver** - The script will attempt to use the system ChromeDriver, or you can install it separately
 
 ## Installation
 
-1. Install the required packages:
+1. Install Python dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
+2. Install ChromeDriver (if not already installed):
+   - Option 1: Download from https://chromedriver.chromium.org/ and add to PATH
+   - Option 2: The script will attempt to use the system Chrome installation
+
 ## Usage
 
-1. Run the Streamlit app:
+### Run Once
+
+Simply run the script:
 ```bash
-streamlit run streamlit_app.py
+python redbeam_scraper.py
 ```
 
-2. Upload your CSV file through the sidebar
-3. Use the filters to narrow down your view
-4. Explore the different dashboard tabs
+The script will:
+1. Log in to Redbeam
+2. Navigate to the data page
+3. Extract all available data
+4. Save it to an Excel file on your desktop with format: `redbeam_data_YYYYMMDD_HHMMSS.xlsx`
 
-## Data Format
+### Schedule Daily Execution (Windows)
 
-The dashboard expects a CSV file with the following columns (at minimum):
-- Asset ID
-- Building
-- Room Name
-- RFID Tag ID (hex)
-- Checked Out To
-- Check Out Date
-- Date Added
-- Last Updated
-- Active
+#### Option 1: Windows Task Scheduler (Recommended)
 
-## Deployment to Streamlit Cloud
+1. Open Task Scheduler (search for "Task Scheduler" in Windows)
+2. Click "Create Basic Task"
+3. Name it "Redbeam Daily Scraper"
+4. Set trigger to "Daily" and choose your preferred time
+5. Action: "Start a program"
+6. Program/script: `python` (or full path to python.exe)
+7. Add arguments: `"C:\Users\natec\redbeam_scraper\redbeam_scraper.py"` (use full path to the script)
+8. Start in: `"C:\Users\natec\redbeam_scraper"` (directory containing the script)
+9. Click Finish
 
-1. Push your code to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub repository
-4. Set the main file path to `streamlit_app.py`
-5. Deploy!
+#### Option 2: Python Schedule Library
 
-## Customization
+If you prefer to keep the script running continuously, you can modify it to use the `schedule` library. Install it first:
+```bash
+pip install schedule
+```
 
-You can customize the dashboard by:
-- Adjusting date thresholds in the alert sections
-- Modifying chart colors and styles
-- Adding additional filters or metrics
-- Customizing the export functionality
+Then modify the script to include scheduling logic.
 
-## License
+## Logging
 
-MIT
+The script creates a log file `redbeam_scraper.log` in the same directory with detailed information about each run, including any errors.
+
+## Troubleshooting
+
+1. **ChromeDriver not found**: Make sure Chrome is installed and ChromeDriver is in your PATH, or download ChromeDriver separately.
+
+2. **Login fails**: 
+   - Check the credentials in the script
+   - The script saves screenshots (`login_error.png`, `login_failed.png`) for debugging
+   - Check the log file for detailed error messages
+
+3. **No data extracted**: 
+   - The script saves a screenshot (`data_page_screenshot.png`) and page source (`data_page_source.html`) for debugging
+   - Check if the data page URL is correct
+   - Verify you have access to the data page after login
+
+4. **Excel file not created**: 
+   - Check that you have write permissions to your Desktop
+   - Verify the `openpyxl` package is installed correctly
+
+## Security Note
+
+The credentials are currently hardcoded in the script. For production use, consider:
+- Using environment variables
+- Using a configuration file with proper permissions
+- Using a secrets management system
+
+## Files Generated
+
+- `redbeam_data_YYYYMMDD_HHMMSS.xlsx` - Excel file with scraped data (on Desktop)
+- `redbeam_scraper.log` - Log file with execution details
+- `*.png` - Screenshots (only created on errors)
+- `data_page_source.html` - HTML source (only created if no data found)
 
